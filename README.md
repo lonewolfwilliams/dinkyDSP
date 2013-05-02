@@ -29,7 +29,6 @@ be careful - the first few times you run your graphs, have the master volume on 
 love to the homebrew community (the surprisingly approachable) LonewolfWilliams
 
 http://www.lonewolfwilliams.com
-gareth@lonewolfwilliams.com
 
 CREDITS:
 --------
