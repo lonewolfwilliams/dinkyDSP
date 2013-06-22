@@ -20,7 +20,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		
 		public int originalSampleRate = 44100;
 		public float fundamentalFrequency = 261.63f;
-		public bool isOneshot = false;
+		public bool isOneshot = true;
 		public float[] buffer;
 		
 		#region IPitchable
@@ -57,6 +57,11 @@ namespace com.lonewolfwilliams.dinkyDSP
 		double m_increment;
 		int m_channel;
 		
+		public SamplePlayer()
+		{
+			recalculate();	
+		}
+		
 		#region IAudioNode implementation
 		public double GetSample ()
 		{
@@ -74,7 +79,6 @@ namespace com.lonewolfwilliams.dinkyDSP
 			if(m_position >= buffer.Length)
 			{
 				m_position = 0;
-				
 				if(SampleCompleted != null)
 				{
 					SampleCompleted(this, EventArgs.Empty);	
@@ -104,7 +108,10 @@ namespace com.lonewolfwilliams.dinkyDSP
 		protected void recalculate()
 		{
 			double scale = (double)originalSampleRate / Driver.sampleRate;
-			float pitchShift = m_frequency / fundamentalFrequency;
+			float pitchShift = 1.0f / fundamentalFrequency * m_frequency;
+			
+			//UnityEngine.Debug.Log (pitchShift);
+			
 			m_increment = scale * pitchShift;
 		}
 	}

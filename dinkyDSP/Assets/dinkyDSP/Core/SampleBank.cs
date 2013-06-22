@@ -65,7 +65,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 			var sample = GetSampleBuffer(name);
 			voice.originalSampleRate = sample.sampleRate;
 			//voice.channels = sample.channels;
-			voice.fundamentalFrequency = sample.fundamentalPitch;
+			//voice.fundamentalFrequency = sample.fundamentalPitch;
 			voice.buffer = sample.buffer;
 			
 			return voice;

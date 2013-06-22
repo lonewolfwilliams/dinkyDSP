@@ -4,45 +4,36 @@ using System.Collections.Generic;
 /*
  * Gareth Williams
  * 
- * a sequencer controls the frequency of an IhasPitch to set notes
- * at a specified musical timing.
- * 
- * think of it as the melodic partner of the metronome
- * 
- * this is an example of a basic composite node
+ * outputs stored note frequencies at a given tempo dictated by metronome
  * 
  */
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
-	public class Sequencer : IAudioNode, IHasInput
+	public class Sequencer : IAudioNode
 	{
 		#region accessors
-		Common.noteDuration m_stepLength;
 		public Common.noteDuration StepLength
 		{
 			get 
 			{
-				return m_stepLength;	
+				return m_metro.StepLength;
 			}
 			set
 			{
-				m_stepLength = value;
-				resetClock();
+				m_metro.StepLength = value;
 			}
 		}
 		
-		float m_bpm;
 		public float Bpm
 		{
 			get
 			{
-				return m_bpm;	
+				return m_metro.Bpm;	
 			}
 			set
 			{
-				m_bpm = value;
-				resetClock();
+				m_metro.Bpm = value;
 			}
 		}
 		
@@ -63,119 +54,45 @@ namespace com.lonewolfwilliams.dinkyDSP
 		
 		#endregion
 
-		#region IHasInput implementation
-		IAudioNode m_inputNode;
-		public IAudioNode InputNode 
-		{
-			get 
-			{
-				return m_inputNode;
-			}
-			set 
-			{
-				m_inputNode = value;
-			}
-		}
-		#endregion
-		
 		public List<StepData> sequence = new List<StepData>();
 		
-		Clock m_clock = new Clock();
+		Metronome m_metro = new Metronome();
 		int m_step;
+		float m_frequency;
 		
 		#region IAudioNode implementation
 		public double GetSample ()
 		{
-			if(m_inputNode == null)
+			if(sequence.Count == 0)
 			{
 				return 0;	
 			}
 			
-			if(m_clock.GetSample() == 1)
+			if(m_metro.GetSample() == 1)
 			{
 				if(m_step >= sequence.Count)
 				{
 					m_step = 0;	
 				}
 				
-				if( m_inputNode is IHasPosition)
-				{
-					(m_inputNode as IHasPosition).Position = 0;	
-				}
-				
-				float frequency = 0;
-				bool isNote = Common.noteToFrequency.TryGetValue(sequence[m_step].note, out frequency);
-				if(	true == isNote && 
-					m_inputNode is IHasPitch )
+				bool isNote = Common.noteToFrequency.TryGetValue(sequence[m_step].note, out m_frequency);
+				if(	true == isNote )
 				{
 					int octave = sequence[m_step].octave;
-					(m_inputNode as IHasPitch).Frequency = frequency * octave;
+					m_frequency *= octave;
 				}
 				
-				if(	sequence[m_step].note == Common.rest &&
-					m_inputNode is IHasPitch )
+				if(	sequence[m_step].note == Common.rest )
 				{
-					(m_inputNode as IHasPitch).Frequency = 0;
+					m_frequency = 0;
 				}
 				
 				m_step++;
 			}
 			
-			double outSample = m_inputNode.GetSample();
-			return outSample;
+			return m_frequency;
 		}
 		#endregion
-		
-		void resetClock()
-		{
-			if(m_clock == null)
-			{
-				return;	
-			}
-			
-			float msPerBeat = (1 / (m_bpm / 60)) * 1000;
-			
-			float durationMS = msPerBeat;
-			switch(m_stepLength)
-			{
-				//regular
-				case Common.noteDuration.whole :
-					durationMS = msPerBeat;
-				break;
-				case Common.noteDuration.half :
-					durationMS = msPerBeat / 2;
-				break;
-				case Common.noteDuration.quarter :
-					durationMS = msPerBeat / 4;
-				break;
-				case Common.noteDuration.eighth :
-					durationMS = msPerBeat / 8;
-				break;
-				case Common.noteDuration.sixteenth :
-					durationMS = msPerBeat / 16;
-				break;
-					
-				//triplet
-				case Common.noteDuration.wholeTriplet :
-					durationMS = msPerBeat / 1 / 3;
-				break;
-				case Common.noteDuration.halfTriplet :
-					durationMS = msPerBeat / 2 / 3;
-				break;
-				case Common.noteDuration.quarterTriplet :
-					durationMS = msPerBeat / 4 / 3;
-				break;
-				case Common.noteDuration.eightTriplet :
-					durationMS = msPerBeat / 8 / 3;
-				break;
-				case Common.noteDuration.sixteenthTriplet :
-					durationMS = msPerBeat / 16 / 3;
-				break;
-				
-			}
-			
-			m_clock.tickFrequencyMS = (int)Math.Floor(durationMS);
-		}
 	}
 }
 

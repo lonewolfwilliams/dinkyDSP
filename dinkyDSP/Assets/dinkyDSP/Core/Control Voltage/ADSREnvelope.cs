@@ -3,14 +3,14 @@ using System;
 /*
  * Gareth Williams
  * 
- * an adsr envelope controls the amplitude of an incoming signal over time, 
+ * an adsr envelope generates an envelope signal over time, 
  * the position needs resetting to zero to 'retrigger' the envelope.
  * 
  */
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
-	public class ADSREnvelope : IAudioNode, IHasPosition, IHasInput
+	public class ADSREnvelope : IAudioNode, IHasPosition
 	{
 		#region accessors
 		double m_attackMS;
@@ -70,21 +70,6 @@ namespace com.lonewolfwilliams.dinkyDSP
 		}
 		#endregion
 
-		#region IHasInput implementation
-		IAudioNode m_inputNode;
-		public IAudioNode InputNode 
-		{
-			get 
-			{
-				return m_inputNode;
-			}
-			set 
-			{
-				m_inputNode = value;
-			}
-		}
-		#endregion
-		
 		#region IPositionable
 		double m_position;
 		public double Position
@@ -107,15 +92,16 @@ namespace com.lonewolfwilliams.dinkyDSP
 		double m_sustainBegin;
 		double m_decayBegin;
 		
-		int m_samplesPerMS = Driver.sampleRate / 1000;
+		public double lengthMS
+		{
+			get
+			{
+				return m_envelopeEnd;	
+			}
+		}
 		
 		public double GetSample()
 		{
-			if (m_inputNode == null)
-			{
-				return 0;	
-			}
-			
 			//evaluate largest boundary to smallest...
 			double amplitude = 0;
 			if (m_position > m_envelopeEnd)//outside envelope
@@ -125,7 +111,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 			else if (m_position > m_releaseBegin) //release
 			{
 				double offsetPosition = m_position - m_releaseBegin;
-				amplitude = (1.0 / (m_releaseMS * m_samplesPerMS)) * offsetPosition;
+				amplitude = (1.0 / m_releaseMS) * offsetPosition;
 				amplitude *= sustainLevel;
 			}
 			else if(m_position > m_sustainBegin) //sustain
@@ -135,7 +121,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 			else if(m_position > m_decayBegin) //decay
 			{
 				double offsetPosition = m_position - m_decayBegin;
-				amplitude = 1.0 - (1.0 / (m_decayMS * m_samplesPerMS)) * offsetPosition; 
+				amplitude = 1.0 - (1.0 / m_decayMS) * offsetPosition; 
 				
 				if(amplitude < sustainLevel)
 				{
@@ -144,19 +130,19 @@ namespace com.lonewolfwilliams.dinkyDSP
 			}
 			else if(m_attackMS > 0) //attack (prevent div by 0 if attack is zero
 			{
-				amplitude = (1.0 / (m_attackMS * m_samplesPerMS)) * m_position;
+				amplitude = (1.0 / m_attackMS) * m_position;
 			}
 			
 			m_position++;
-			return m_inputNode.GetSample() * amplitude;
+			return amplitude;
 		}
 		
 		private void recalculateEnvelope()
 		{
-			m_envelopeEnd	= (m_attackMS + m_decayMS  + m_sustainMS  + m_releaseMS) * m_samplesPerMS;
-			m_releaseBegin	= (m_attackMS + m_decayMS  + m_sustainMS) * m_samplesPerMS;
-			m_sustainBegin	= (m_attackMS + m_decayMS) * m_samplesPerMS;
-			m_decayBegin 	= m_attackMS  * m_samplesPerMS;
+			m_envelopeEnd	= (m_attackMS + m_decayMS  + m_sustainMS  + m_releaseMS);
+			m_releaseBegin	= (m_attackMS + m_decayMS  + m_sustainMS);
+			m_sustainBegin	= (m_attackMS + m_decayMS);
+			m_decayBegin 	= m_attackMS;
 		}
 	}
 }

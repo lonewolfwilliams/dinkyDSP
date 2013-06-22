@@ -7,7 +7,7 @@ using System.Collections.Generic;
  * a metronome is a clock with musical timing - it controls the position of an IHasPosition
  * best used with adsr envelope
  * 
- * think of it as the rhythmic partner of the metronome
+ * think of it as the rhythmic partner clock
  * 
  * this is an example of a basic composite node
  * 
@@ -15,10 +15,10 @@ using System.Collections.Generic;
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
-	public class Metronome : IAudioNode, IHasInput
+	public class Metronome : IAudioNode
 	{
 		#region accessors
-		Common.noteDuration m_stepLength;
+		Common.noteDuration m_stepLength = Common.noteDuration.whole;
 		public Common.noteDuration StepLength
 		{
 			get 
@@ -32,7 +32,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 			}
 		}
 		
-		float m_bpm;
+		float m_bpm = 100;
 		public float Bpm
 		{
 			get
@@ -48,50 +48,28 @@ namespace com.lonewolfwilliams.dinkyDSP
 		
 		#endregion
 
-		#region IHasInput implementation
-		IAudioNode m_inputNode;
-		public IAudioNode InputNode 
-		{
-			get 
-			{
-				return m_inputNode;
-			}
-			set 
-			{
-				m_inputNode = value;
-			}
-		}
-		#endregion
-		
 		Clock m_clock = new Clock();
+		double m_tickFrequencyMS;
 		int m_step;
 		
 		#region IAudioNode implementation
 		public double GetSample ()
 		{
-			if( m_inputNode == null)
+			double outSample = 0;
+			if( m_clock.GetSample() >= m_tickFrequencyMS )
 			{
-				return 0;	
-			}
-			
-			if( m_clock.GetSample() == 1 &&
-				m_inputNode is IHasPosition)
-			{
-				(m_inputNode as IHasPosition).Position = 0;	
-			}
-			
-			double outSample = m_inputNode.GetSample();
-			
-			if(outSample > 1)
-			{
-#if SERVICE_MODE
-				UnityEngine.Debug.LogWarning("clipping in metro " + outSample);	
-#endif
+				outSample = 1;
+				m_clock.Reset();
 			}
 			
 			return outSample;
 		}
 		#endregion
+		
+		public Metronome()
+		{
+			resetClock();	
+		}
 		
 		void resetClock()
 		{
@@ -139,7 +117,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 				
 			}
 			
-			m_clock.tickFrequencyMS = (int)Math.Floor(durationMS);
+			m_tickFrequencyMS = (int)Math.Floor(durationMS);
 		}
 	}
 }

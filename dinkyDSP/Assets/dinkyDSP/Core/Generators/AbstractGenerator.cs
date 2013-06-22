@@ -13,6 +13,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 {
 	public abstract class AbstractGenerator : IHasPitch
 	{
+		#region IHasPitch
 		float m_frequency = Common.noteToFrequency["C"] * 3;//middle c (test tone)
 		public float Frequency
 		{
@@ -25,6 +26,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 				m_frequency = value;
 			}
 		}
+		#endregion
 		
 		protected double m_phase;
 		
