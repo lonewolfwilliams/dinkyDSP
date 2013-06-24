@@ -47,9 +47,9 @@
      <Compile Include="Assets\Tutorials\Five\AudioContextBehaviour.cs" />
      <Compile Include="Assets\Tutorials\Four\AudioContextBehaviour.cs" />
      <Compile Include="Assets\Tutorials\One\AudioContextBehaviour.cs" />
+     <Compile Include="Assets\Tutorials\Six\AudioContextBehaviour.cs" />
      <Compile Include="Assets\Tutorials\Three\AudioContextBehaviour.cs" />
      <Compile Include="Assets\Tutorials\Two\AudioContextBehaviour.cs" />
-     <Compile Include="Assets\dinkyDSP\Composite\StepSequencer.cs" />
      <Compile Include="Assets\dinkyDSP\Core\Common.cs" />
      <Compile Include="Assets\dinkyDSP\Core\Control Voltage\ADSREnvelope.cs" />
      <Compile Include="Assets\dinkyDSP\Core\Control Voltage\Clock.cs" />
@@ -66,7 +66,7 @@
      <Compile Include="Assets\dinkyDSP\Core\IAudioNode.cs" />
      <Compile Include="Assets\dinkyDSP\Core\IHasInput.cs" />
      <Compile Include="Assets\dinkyDSP\Core\IHasPitch.cs" />
-     <Compile Include="Assets\dinkyDSP\Core\IhasPosition.cs" />
+     <Compile Include="Assets\dinkyDSP\Core\IHasPosition.cs" />
      <Compile Include="Assets\dinkyDSP\Core\Players\SamplePlayer.cs" />
      <Compile Include="Assets\dinkyDSP\Core\Players\SyncedSamplePlayer.cs" />
      <Compile Include="Assets\dinkyDSP\Core\Processors\Gain.cs" />

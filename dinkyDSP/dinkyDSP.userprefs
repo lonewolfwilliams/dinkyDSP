@@ -1,8 +1,10 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Tutorials\Five\AudioContextBehaviour.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Tutorials\Six\AudioContextBehaviour.cs">
     <Files>
-      <File FileName="Assets\Tutorials\Five\AudioContextBehaviour.cs" Line="158" Column="6" />
+      <File FileName="Assets\Tutorials\Six\AudioContextBehaviour.cs" Line="14" Column="21" />
+      <File FileName="Assets\dinkyDSP\Core\Control Voltage\Metronome.cs" Line="111" Column="4" />
+      <File FileName="Assets\dinkyDSP\Core\Driver.cs" Line="20" Column="3" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

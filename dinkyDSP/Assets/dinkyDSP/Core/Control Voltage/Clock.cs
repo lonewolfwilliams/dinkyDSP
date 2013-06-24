@@ -1,3 +1,4 @@
+using System;
 
 /*
  * Gareth Williams
@@ -10,7 +11,7 @@
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
-	public class Clock : IAudioNode
+	public class Clock : IAudioNode, IDisposable
 	{
 		double m_positionInSamples = 0;
 		int m_samplesPerMS = Driver.sampleRate / 1000;
@@ -20,13 +21,37 @@ namespace com.lonewolfwilliams.dinkyDSP
 			m_positionInSamples = 0;	
 		}
 		
+		double m_signal;
+		
+		public Clock()
+		{
+			Driver.PreSampleGenerated += (sender, e) => GenerateSignal();	
+		}
+		
 		#region IAudioNode implementation
-		public double GetSample ()
+		public event SampleEventHandler SampleGenerated;
+		
+		void GenerateSignal()
 		{
 			m_positionInSamples++;
-			double voltage = m_positionInSamples / m_samplesPerMS;
+			m_signal = m_positionInSamples / m_samplesPerMS;
 			
-			return voltage;
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(m_signal);	
+			}
+		}
+		
+		public double GetSample ()
+		{
+			return m_signal;	
+		}
+		#endregion
+
+		#region IDisposable implementation
+		public void Dispose ()
+		{
+			Driver.PreSampleGenerated -= (sender, e) => GenerateSignal();
 		}
 		#endregion
 	}

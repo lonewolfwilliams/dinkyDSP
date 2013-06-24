@@ -18,6 +18,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		public List<IAudioNode> m_inputs = new List<IAudioNode>();
 		
 		#region IAudioNode
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			double sumAmplitude = 0;
@@ -26,7 +27,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 				sumAmplitude += input.GetSample();
 			}
 			
-			var sample = (sumAmplitude / m_inputs.Count) * masterOutputLevel;
+			var sampleOut = (sumAmplitude / m_inputs.Count) * masterOutputLevel;
 			
 #if SERVICE_MODE
 			if(sample > 1)
@@ -34,7 +35,11 @@ namespace com.lonewolfwilliams.dinkyDSP
 				UnityEngine.Debug.LogWarning(sumAmplitude + " " + m_inputs.Count);	
 			}
 #endif
-			return sample;
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(sampleOut);
+			}
+			return sampleOut;
 		}
 		#endregion
 		

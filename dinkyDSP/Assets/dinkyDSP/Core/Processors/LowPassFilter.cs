@@ -43,6 +43,7 @@ namespace com.lonewolfwilliams.dinkyDSP
         double[] y = new double[3];
 
 		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			if(m_inputNode == null)
@@ -74,7 +75,13 @@ namespace com.lonewolfwilliams.dinkyDSP
             	(b0/a0)*x[2] + (b1/a0)*x[1] + (b2/a0)*x[0]
                 - (a1/a0)*y[1] - (a2/a0)*y[0]);
 			
-			return y[2];
+			double sampleOut = y[2];
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(sampleOut);	
+			}
+			
+			return sampleOut;
 		}
 		#endregion
 		

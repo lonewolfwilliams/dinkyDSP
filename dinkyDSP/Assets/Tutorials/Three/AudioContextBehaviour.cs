@@ -122,7 +122,7 @@ namespace TutorialThree
 				new Rect(10, 50, 100, 50), 
 				m_sineWave.Frequency, lowOctave, highOctave);
 			
-			GUI.Label(new Rect(10, 10, 100, 50), "ghost haunting simulator v 0.1");
+			GUI.Label(new Rect(10, 10, 150, 50), "ghost haunting simulator v 0.2 Compressor");
 		}
 		
 		/// <summary>
@@ -160,6 +160,8 @@ namespace TutorialThree
 			public IAudioNode inputNode;
 			
 			#region IAudioNode implementation
+			//we ignore this event for now
+			public event SampleEventHandler SampleGenerated;
 			/// <summary>
 			/// The next audio node in the graph (in this case the mixer) will require sample data from this
 			/// node, so we implement the IAudioNode interface.

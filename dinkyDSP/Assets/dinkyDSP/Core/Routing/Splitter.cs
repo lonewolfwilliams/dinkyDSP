@@ -9,7 +9,7 @@ using System;
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
-	public class Splitter : IAudioNode, IHasInput
+	public class Splitter : IAudioNode, IHasInput, IDisposable
 	{
 		#region IHasInput
 		IAudioNode m_inputNode;
@@ -21,41 +21,54 @@ namespace com.lonewolfwilliams.dinkyDSP
 			}
 			set
 			{
+				var previousNode = m_inputNode;
+				
+				if(previousNode == value)
+				{
+					return;	
+				}
+				
+				if(previousNode != null)
+				{
+					previousNode.SampleGenerated -= (sample) => m_sample = sample;
+				}
+
 				m_inputNode = value;
+				
+				if(m_inputNode != null)
+				{
+					m_inputNode.SampleGenerated += (sample) => m_sample = sample;
+				}
 			}
 		}
 		#endregion
 		
-		int m_childCount;
-		int m_currentCount;
 		double m_sample;
 		public void AddOutput(IHasInput child)
 		{
 			child.InputNode = this;
-			m_childCount++;
 		}
 		
 		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
-			if(m_inputNode == null)
+			if(SampleGenerated != null)
 			{
-				return 0;	
+				SampleGenerated(m_sample);	
 			}
-			
-			if(m_currentCount >= m_childCount)
-			{
-				m_currentCount = 0;
-			}
-			
-			if(m_currentCount == 0)
-			{
-				m_sample = m_inputNode.GetSample();	
-			}
-			
-			m_currentCount++;
 			
 			return m_sample;
+		}
+		#endregion
+
+		#region IDisposable implementation
+		public void Dispose ()
+		{
+			if(m_inputNode != null)
+			{
+				m_inputNode.SampleGenerated -= (sample) => m_sample = sample;
+			}
 		}
 		#endregion
 	}

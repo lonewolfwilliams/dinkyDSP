@@ -9,8 +9,10 @@ using System;
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
+	public delegate void SampleEventHandler(double sample);
 	public interface IAudioNode
 	{
+		event SampleEventHandler SampleGenerated;
 		double GetSample();
 	}
 }

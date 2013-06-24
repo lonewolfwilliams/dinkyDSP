@@ -63,6 +63,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		}
 		
 		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			if(buffer == null)
@@ -100,6 +101,11 @@ namespace com.lonewolfwilliams.dinkyDSP
 			double lerp = buffer[prevIndex] + sampleDelta * interpolationAmount;
 			
 			m_position += m_increment;
+			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(lerp);	
+			}
 			
 			return lerp;
 		}

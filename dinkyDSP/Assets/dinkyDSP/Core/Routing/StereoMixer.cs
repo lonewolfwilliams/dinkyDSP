@@ -20,6 +20,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		int m_channel;
 		
 		#region IAudioNode
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			if(m_channel >= m_inputs.Count)
@@ -44,7 +45,13 @@ namespace com.lonewolfwilliams.dinkyDSP
 				}
 			}
 			
-			return (sumAmplitude / m_inputs.Count) * masterOutputLevel;
+			double sampleOut = (sumAmplitude / m_inputs.Count) * masterOutputLevel;
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(sampleOut);
+			}
+			
+			return sampleOut;
 		}
 		#endregion
 		

@@ -6,7 +6,44 @@ using System;
 /*
  * Tutorial five
  * 
- * This tutorial talks a little about playing back samples and sampleRate
+ * This tutorial shows how you might use Dinky for a more practical purpose, and introduces control voltage
+ * audionodes.
+ * 
+ * So, all that DSP Mambo Jimbo is great you think to yourself, but what can I actually use Dinky for? 
+ * Stop running around the houses in your little car!
+ * 
+ * As you can see the custom Audio node in this patch has grown somewhat bigger, it also illustrates the flexibility
+ * of the Dinky Framework - you can nest Audio nodes inside other audio nodes to make more complex units - in 
+ * this case a raygun synthesiser!
+ * 
+ * Unfortunately this graph also highlights one of the drawbacks of the framework, which is that for something simple
+ * Dinky can be overkill. The same could be achieved with an AudioSource and some randomisation in a scripted component,
+ * however, examples such as this are only the beginning! If you have bigger ideas the framework will help you realise them.
+ * 
+ * Let's look at some of the nested graph in our custom audio node.
+ * 
+ * The first thing to note is that we have introduced some new audio nodes, these come from Dinky's Control Voltage namespace,
+ * as with the generators, these nodes produce waveforms, which we access one sample at a time through GetSample. However,
+ * unlike the generators, the intentional use for control voltages are to modulate other parameters, in this case
+ * to apply an attack sustain decay release envelope to a sawtooth wave.
+ * 
+ * The ADSR envelope requires a control voltage of it's own to set the position in time, that we want to retrieve
+ * the corresponding amplitude value of the envelope, for. This control voltage signal comes from the clock, that produces
+ * a linearly increasing value in milliseconds that corresponds to the position in time for the number of samples processed.
+ * 
+ * Note that it is our responsibility to reset the clock so that the ADSR envelope retriggers when we press the button.
+ *
+ * An important point to grasp is that whilst the envelope shapes the amplitude of the sound in response to button presses, 
+ * sound is continually being synthesised by the graph, even if it is outputting zero's (as all audio units in a state of rest should do).
+ * 
+ * What to do next ?
+ * 
+ * You could try to make the raygun GetSample method more efficient by bypassing calculations in between button presses - 
+ * remember! the graph must run continously even if it is outputting silence!
+ * 
+ * The connections in Dinky are very flexible, perhaps you should experiment with say using a sine wave generator
+ * to modulate the freqeuncy of another wave generator (Frequency Modulation), or perhaps modulate the amplitude of the samples output by 
+ * that generator (Amplitude Modulation)? You may be surprised by the new tones you can generate using these techniques :)
  * 
  */
 
@@ -14,15 +51,9 @@ namespace TutorialFive
 {
 	public class AudioContextBehaviour : MonoBehaviour 
 	{
-		/// <summary>
-		/// The clips that will be buffered and made available to the Dinky Framework as 
-		/// samples buffers.
-		/// </summary>
-		public List<AudioClip> clips = new List<AudioClip>();
-		
-		SampleBank m_bank;
 		Driver m_driver;
 		MonoMixer m_mixer;
+		RayGun m_raygun;
 		
 		/// <summary>
 		/// When Awake is called by the Unity Engine we build our simple audio graph,
@@ -30,8 +61,29 @@ namespace TutorialFive
 		/// </summary>
 		void Awake()
 		{
-			InitialiseSampleBank();
-			InitialiseGraph();
+			//context
+			Driver.sampleRate = 48000;
+			m_driver = new Driver();
+			
+			//audio nodes
+			m_raygun = new RayGun();
+			m_mixer = new MonoMixer();
+			m_mixer.masterOutputLevel = 0.5;
+			
+			//connect our graph
+			m_mixer.AddInput(m_raygun);
+			m_driver.rootNode = m_mixer;
+		}
+		
+		void OnGUI()
+		{
+			GUI.enabled = m_raygun.GetGunIsReady();
+			if(GUI.Button(new Rect(10,10,100,100), "Fire ray gun"))
+			{
+				m_raygun.TryFireGun();
+			}
+			
+			GUI.Label(new Rect(10, 110, 100, 50), "alien invasion simulator v 0.1");
 		}
 		
 		/// <summary>
@@ -53,115 +105,96 @@ namespace TutorialFive
 			m_driver.GenerateSamples(ref data);
 		}
 		
-		//helpers------------------------------------------------------------------------------
+		//helper classes---------------------------------------------------------------
 		
-		void InitialiseSampleBank()
+		/// <summary>
+		/// Our first nested graph element :) It creates a small graph for making a ray gun noise with 
+		/// some randomised characteristics.
+		/// </summary>
+		class RayGun : IAudioNode
 		{
-			m_bank = new SampleBank();
-			foreach(AudioClip clip in clips)
+			SawtoothWaveGenerator m_sawTooth;
+			Gain m_gainer;
+			Clock m_position;
+			ADSREnvelope m_envelope;
+			IAudioNode m_nestedRootNode;
+			
+			public RayGun()
 			{
-				m_bank.AddSampleBufferFromAudioClip(clip.name, clip);
-			}
-		}
-		
-		void InitialiseGraph()
-		{
-			//context
-			Driver.sampleRate = 48000;
-			m_driver = new Driver();
-			
-			//audio nodes
-			var stepSeq = new StepSequencer();
-			var voice 	= m_bank.GetSamplePlayerForBuffer("505 arp 1");
-			stepSeq.sequence = new List<StepData>(){ 
-				new StepData("C", 4), 	new StepData("G", 2), new StepData("D", 4) 
-			};
-			m_mixer = new MonoMixer();
-			m_mixer.masterOutputLevel = 0.5;
-			
-			//connect our graph
-			stepSeq.InputNode = voice;
-			m_mixer.AddInput(stepSeq);
-			m_driver.rootNode = m_mixer;	
-		}
-		
-		//helper class-----------------------------------------------------------------------
-		class StepSequencer : IAudioNode, IHasInput
-		{
-			#region accessors
-			
-			public List<StepData> sequence
-			{
-				get
-				{
-					return m_frequencyTrigger.sequence;
-				}
-				set
-				{
-					m_frequencyTrigger.sequence = value;
-				}
+				//audio nodes
+				m_sawTooth = new SawtoothWaveGenerator();
+				m_position = new Clock();
+				m_envelope = new ADSREnvelope();
+				m_envelope.sustainLevel = 0f; // decay should fade to sustain of 0
+				m_envelope.AttackMS = 10; //fade in duration (a little fade in to prevent 'clicks')
+				m_envelope.DecayMS = 1000; //fade out duration
+				
+				m_gainer = new Gain();
+				m_gainer.drive = 1.0;
+				
+				//connect our nested graph
+				//note how the sample output from the clock can be used to control the envelope position
+				m_position.SampleGenerated += (sample) => m_envelope.Position = m_position.GetSample();
+				m_gainer.InputNode = m_sawTooth;
 			}
 			
-			public float BPM
+			public void TryFireGun()
 			{
-				get 
+				if(false == GetGunIsReady())
 				{
-					return m_frequencyTrigger.Bpm;	
+					Debug.Log("gun is not ready");
+					return;	
 				}
-				set 
-				{
-					m_frequencyTrigger.Bpm = value;
-					m_sampleTrigger.Bpm = value;
-				}
+				
+				randomiseParameters();
+				m_position.Reset();
 			}
 			
-			#endregion
-			
-			#region IHasInput implementation
-			private IAudioNode m_inputNode;
-			public IAudioNode InputNode 
+			public bool GetGunIsReady()
 			{
-				get 
-				{
-					return m_inputNode;
-				}
-				set 
-				{
-					m_inputNode = value;
-				}
+				return m_envelope.Position > m_envelope.lengthMS;
 			}
-			#endregion
 			
-			Metronome m_sampleTrigger = new Metronome();
-			Sequencer m_frequencyTrigger = new Sequencer();
+			/// <summary>
+			/// Randomise some of the values of the graph to get variation in our raygun sound
+			/// </summary>
+			void randomiseParameters()
+			{
+				//this should look familiar:
+				var lowOctave = Common.noteToFrequency["C"] * 7;
+				var highOctave = Common.noteToFrequency["C"] * 9;
+				m_sawTooth.Frequency = UnityEngine.Random.Range(lowOctave, highOctave);
+				
+				var lowDrive = 0.3f;
+				var highDrive = 0.9f; //remember no more than one!
+				m_gainer.drive = UnityEngine.Random.Range(lowDrive, highDrive);
+				
+				var lowDecayMS = 800;
+				var highDecayMS = 1000;
+				m_envelope.DecayMS = UnityEngine.Random.Range(lowDecayMS, highDecayMS);
+			}
 			
 			#region IAudioNode implementation
+			//we ignore this event for now...
+			public event SampleEventHandler SampleGenerated;
 			public double GetSample ()
 			{
-				if( m_inputNode == null)
-				{
-					return 0;	
-				}
+				//signals don't necessarily have to be used to produce a sound - here the signal
+				//is used to set the position on the x axis (time) for the y lookup into the adsr envelope
+				//(amplitude)...
+				var control = m_envelope.GetSample();
 				
-				var frequency 	= m_frequencyTrigger.GetSample();
-				var trigger 	= m_sampleTrigger.GetSample();
+				//set the frequency from the control
+				m_sawTooth.Frequency *= 0.99999f;
 				
-				if( m_inputNode is IHasPosition && 
-					trigger == 1)
-				{
-					(m_inputNode as IHasPosition).Position = 0;
-				}
+				//get the audio signal from the graph
+				var audio = m_gainer.GetSample();
 				
-				if(m_inputNode is IHasPitch)
-				{
-					(m_inputNode as IHasPitch).Frequency = (float)frequency;
-				}
-				
-				double audioSignal = m_inputNode.GetSample();
-				
-				return audioSignal;
+				//return the sample scaled by the amplitude from the envelope
+				return audio * control;
 			}
 			#endregion
+			
 		}
 	}
 }

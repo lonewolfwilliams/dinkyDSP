@@ -15,7 +15,7 @@ using System.Collections.Generic;
 
 namespace com.lonewolfwilliams.dinkyDSP
 {
-	public class Metronome : IAudioNode
+	public class Metronome : IAudioNode, IDisposable
 	{
 		#region accessors
 		Common.noteDuration m_stepLength = Common.noteDuration.whole;
@@ -28,7 +28,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 			set
 			{
 				m_stepLength = value;
-				resetClock();
+				calculateFrequency();
 			}
 		}
 		
@@ -42,42 +42,25 @@ namespace com.lonewolfwilliams.dinkyDSP
 			set
 			{
 				m_bpm = value;
-				resetClock();
+				calculateFrequency();
 			}
 		}
 		
 		#endregion
 
 		Clock m_clock = new Clock();
+		double m_signal;
 		double m_tickFrequencyMS;
 		int m_step;
 		
-		#region IAudioNode implementation
-		public double GetSample ()
-		{
-			double outSample = 0;
-			if( m_clock.GetSample() >= m_tickFrequencyMS )
-			{
-				outSample = 1;
-				m_clock.Reset();
-			}
-			
-			return outSample;
-		}
-		#endregion
-		
 		public Metronome()
 		{
-			resetClock();	
+			calculateFrequency();	
+			m_clock.SampleGenerated += (sample) => GenerateSignal(sample);
 		}
-		
-		void resetClock()
+	
+		void calculateFrequency()
 		{
-			if(m_clock == null)
-			{
-				return;	
-			}
-			
 			float msPerBeat = (1 / (m_bpm / 60)) * 1000;
 			
 			float durationMS = msPerBeat;
@@ -119,6 +102,37 @@ namespace com.lonewolfwilliams.dinkyDSP
 			
 			m_tickFrequencyMS = (int)Math.Floor(durationMS);
 		}
+		
+		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
+		
+		void GenerateSignal(double sampleIn)
+		{
+			m_signal = 0;
+			if( sampleIn >= m_tickFrequencyMS )
+			{
+				m_signal = 1;
+				m_clock.Reset();
+			}
+			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(m_signal);	
+			}
+		}
+		
+		public double GetSample ()
+		{
+			return m_signal;
+		}
+		#endregion
+
+		#region IDisposable implementation
+		public void Dispose ()
+		{
+			m_clock.SampleGenerated -= (sample) => GenerateSignal(sample);
+		}
+		#endregion
 	}
 }
 

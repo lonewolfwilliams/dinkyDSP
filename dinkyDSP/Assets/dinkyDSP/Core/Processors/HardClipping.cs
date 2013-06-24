@@ -31,6 +31,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		#endregion
 		
 		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			if(m_inputNode == null)
@@ -43,6 +44,11 @@ namespace com.lonewolfwilliams.dinkyDSP
 			if(amplitude > threshold)
 			{
 				amplitude = threshold;	
+			}
+			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(amplitude);	
 			}
 			
 			return amplitude;

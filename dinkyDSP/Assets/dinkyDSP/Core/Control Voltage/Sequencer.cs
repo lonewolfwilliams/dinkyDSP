@@ -13,30 +13,6 @@ namespace com.lonewolfwilliams.dinkyDSP
 	public class Sequencer : IAudioNode
 	{
 		#region accessors
-		public Common.noteDuration StepLength
-		{
-			get 
-			{
-				return m_metro.StepLength;
-			}
-			set
-			{
-				m_metro.StepLength = value;
-			}
-		}
-		
-		public float Bpm
-		{
-			get
-			{
-				return m_metro.Bpm;	
-			}
-			set
-			{
-				m_metro.Bpm = value;
-			}
-		}
-		
 		public int CurrentStep
 		{
 			get
@@ -51,24 +27,25 @@ namespace com.lonewolfwilliams.dinkyDSP
 				return currentStep;
 			}
 		}
-		
 		#endregion
 
 		public List<StepData> sequence = new List<StepData>();
 		
-		Metronome m_metro = new Metronome();
 		int m_step;
 		float m_frequency;
 		
 		#region IAudioNode implementation
-		public double GetSample ()
+		public event SampleEventHandler SampleGenerated;
+		
+		public void GenerateSignal(double sampleIn)
 		{
 			if(sequence.Count == 0)
 			{
-				return 0;	
+				m_frequency = 0;	
+				return;
 			}
 			
-			if(m_metro.GetSample() == 1)
+			if(sampleIn >= 1)
 			{
 				if(m_step >= sequence.Count)
 				{
@@ -90,6 +67,14 @@ namespace com.lonewolfwilliams.dinkyDSP
 				m_step++;
 			}
 			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(m_frequency);	
+			}	
+		}
+		
+		public double GetSample ()
+		{
 			return m_frequency;
 		}
 		#endregion

@@ -30,6 +30,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		#endregion
 		
 		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			if(m_inputNode == null)
@@ -37,7 +38,12 @@ namespace com.lonewolfwilliams.dinkyDSP
 				return 0;
 			}
 			
-			return m_inputNode.GetSample() * drive;
+			double sampleOut = m_inputNode.GetSample() * drive;
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(sampleOut);
+			}
+			return sampleOut;
 		}
 		#endregion
 		

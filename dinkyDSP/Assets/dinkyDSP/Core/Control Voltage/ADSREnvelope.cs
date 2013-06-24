@@ -85,13 +85,6 @@ namespace com.lonewolfwilliams.dinkyDSP
 		}
 		#endregion
 		
-		public double sustainLevel = 0.5;
-		
-		double m_envelopeEnd;
-		double m_releaseBegin;
-		double m_sustainBegin;
-		double m_decayBegin;
-		
 		public double lengthMS
 		{
 			get
@@ -99,6 +92,16 @@ namespace com.lonewolfwilliams.dinkyDSP
 				return m_envelopeEnd;	
 			}
 		}
+		
+		public double sustainLevel = 0.5;
+		
+		double m_envelopeEnd;
+		double m_releaseBegin;
+		double m_sustainBegin;
+		double m_decayBegin;
+		
+		#region IAudioNode
+		public event SampleEventHandler SampleGenerated;
 		
 		public double GetSample()
 		{
@@ -134,8 +137,15 @@ namespace com.lonewolfwilliams.dinkyDSP
 			}
 			
 			m_position++;
+			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(amplitude);	
+			}
+			
 			return amplitude;
 		}
+		#endregion
 		
 		private void recalculateEnvelope()
 		{

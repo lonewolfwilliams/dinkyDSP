@@ -9,9 +9,11 @@ using System.Collections.Generic;
  */
 
 namespace com.lonewolfwilliams.dinkyDSP
-{
+{		
 	public class Driver
 	{
+		public static event EventHandler PreSampleGenerated;
+		
 		public IAudioNode rootNode;
 		public static int sampleRate = 48000; //unity default as of 4.01f
 		public static int channels = 2; //unity default as of 4.01f
@@ -33,6 +35,11 @@ namespace com.lonewolfwilliams.dinkyDSP
 			int blockSize = buffer.Length;
 			for( int sample = 0; sample < blockSize; sample++)
 			{
+				if(PreSampleGenerated != null)
+				{
+					PreSampleGenerated(this, EventArgs.Empty);	
+				}
+				
 				buffer[sample] = (float)rootNode.GetSample();
 			}
 		}

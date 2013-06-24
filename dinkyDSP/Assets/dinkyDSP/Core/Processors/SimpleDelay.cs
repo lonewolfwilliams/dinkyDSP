@@ -44,6 +44,8 @@ namespace com.lonewolfwilliams.dinkyDSP
 			m_bufferIndex = 0;
 		}
 		
+		#region IAudioNode
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample()
 		{
 			if(m_inputNode == null)
@@ -71,8 +73,13 @@ namespace com.lonewolfwilliams.dinkyDSP
 			
 			m_bufferIndex++;
 			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(output);
+			}
 			return output;
 		}
+		#endregion
 	}
 }
 

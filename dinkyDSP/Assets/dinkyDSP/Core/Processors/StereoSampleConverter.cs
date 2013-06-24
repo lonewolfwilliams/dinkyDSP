@@ -88,6 +88,7 @@ namespace com.lonewolfwilliams.dinkyDSP
 		#endregion	
 		
 		#region IAudioNode implementation
+		public event SampleEventHandler SampleGenerated;
 		public double GetSample ()
 		{
 			if(m_buffer == null)
@@ -151,6 +152,10 @@ namespace com.lonewolfwilliams.dinkyDSP
 			}
 			*/
 			
+			if(SampleGenerated != null)
+			{
+				SampleGenerated(lerp);	
+			}
 			return lerp;
 		}
 		#endregion
