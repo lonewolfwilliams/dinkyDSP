@@ -3,6 +3,8 @@ dinkyDSP
 
 Small, simple and extensible real-time audio synthesis framework for Unity4 written in c-sharp
 
+Currently this codebase is in heavy development! Be prepared for major refactors!
+
 Welcome to the alpha release of dinkyDSP - A real-time synthesis library for Unity.
 -----------------------------------------------------------------------------------
 
