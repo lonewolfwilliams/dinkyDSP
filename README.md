@@ -18,7 +18,7 @@ I intend to use this library primarily for developing my own audio games in Unit
 - is free (please don't *demand* support)
 - suits people who like to hack around (feel free to *ask* for support) and contribute o_O
 
-please look at the included demo scene for a code sample and to get started ;)
+There are five tutorial scenes which should help you get started ;)
 
 ---!!!warning---
 
@@ -31,9 +31,3 @@ be careful - the first few times you run your graphs, have the master volume on 
 love to the homebrew community (the surprisingly approachable) LonewolfWilliams
 
 http://www.lonewolfwilliams.com
-
-CREDITS:
---------
-
-Texture taken from here:
-http://propnomicon.blogspot.co.uk/2009/05/hellraiser-cube-design.html
